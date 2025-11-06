@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>事件倒数 — 自定义模板</title>
+  <style>
+    :root{
+      --bg1: #0f172a;
+      --bg2: #0b3d91;
+      --accent: #ffcc00;
+      --card: rgba(255,255,255,0.06);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui}
+    body{
+      background:linear-gradient(180deg,var(--bg1),var(--bg2));
+      color:#e6eef8;display:flex;align-items:center;justify-content:center;padding:36px;
+    }
+    .wrap{max-width:900px;width:100%;padding:28px;border-radius:18px;background:rgba(255,255,255,0.05);backdrop-filter:blur(6px);box-shadow:0 10px 40px rgba(0,0,0,0.6)}
+    header{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+    .logo{width:80px;height:80px;border-radius:16px;background:linear-gradient(135deg,var(--accent),#ffe680);display:flex;align-items:center;justify-content:center;color:#0b2340;font-weight:800;font-size:20px;flex-shrink:0}
+    .title h1{margin:0;font-size:1.6rem;letter-spacing:0.6px}
+    .title p{margin:6px 0 0;opacity:0.9}
+    .controls{margin-top:16px;display:flex;flex-wrap:wrap;gap:10px}
+    .controls input{padding:8px;border-radius:6px;border:none;font-size:1rem}
+    .controls button{padding:8px 14px;border:none;border-radius:6px;background:var(--accent);color:#0b2340;font-weight:600;cursor:pointer}
+    .countdown{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+    .seg{background:rgba(255,255,255,0.05);padding:18px;border-radius:12px;min-width:110px;text-align:center}
+    .num{font-size:2.2rem;font-weight:700;color:var(--accent)}
+    .label{margin-top:6px;font-size:0.85rem;color:rgba(230,238,248,0.85)}
+    .msg{margin-top:12px;padding:12px;background:rgba(255,255,255,0.03);border-radius:10px;font-weight:600;text-align:center}
+    .layout{display:flex;gap:24px;flex-wrap:wrap;margin-top:20px}
+    .left{flex:1}
+    .right{width:250px;max-width:100%;background:rgba(255,255,255,0.03);padding:16px;border-radius:12px;text-align:center}
+    .slogan{font-size:1rem;line-height:1.4}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo" id="yearBox">YEAR</div>
+      <div class="title">
+        <h1 id="eventName">自定义事件倒数</h1>
+        <p>目标日期：<strong id="targetDateLabel">请选择日期与时间</strong></p>
+      </div>
+    </header>
+
+    <div class="controls" id="controlPanel">
+      <input type="text" id="eventInput" placeholder="事件名称 (例如：毕业典礼)" />
+      <input type="datetime-local" id="datetimeInput" />
+      <input type="text" id="sloganInput" placeholder="右侧 Slogan (例如：未来从此刻开始)" />
+      <button id="setBtn">设定事件</button>
+    </div>
+
+    <div class="layout">
+      <div class="left">
+        <div class="countdown" id="countdown" style="display:none">
+          <div class="seg"><div class="num" id="days">0</div><div class="label">天</div></div>
+          <div class="seg"><div class="num" id="hours">00</div><div class="label">小时</div></div>
+          <div class="seg"><div class="num" id="mins">00</div><div class="label">分钟</div></div>
+          <div class="seg"><div class="num" id="secs">00</div><div class="label">秒</div></div>
+        </div>
+        <div class="msg" id="msg">请输入事件与目标时间</div>
+      </div>
+      <div class="right">
+        <div class="slogan" id="sloganText">在这里输入你的口号</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  let targetDate = null;
+  const eventInput = document.getElementById('eventInput');
+  const datetimeInput = document.getElementById('datetimeInput');
+  const sloganInput = document.getElementById('sloganInput');
+  const setBtn = document.getElementById('setBtn');
+  const controlPanel = document.getElementById('controlPanel');
+  const countdown = document.getElementById('countdown');
+  const msg = document.getElementById('msg');
+  const daysEl = document.getElementById('days');
+  const hoursEl = document.getElementById('hours');
+  const minsEl = document.getElementById('mins');
+  const secsEl = document.getElementById('secs');
+  const eventName = document.getElementById('eventName');
+  const targetDateLabel = document.getElementById('targetDateLabel');
+  const yearBox = document.getElementById('yearBox');
+  const sloganText = document.getElementById('sloganText');
+
+  setBtn.addEventListener('click', ()=>{
+    const name = eventInput.value.trim() || '我的事件';
+    const dateVal = datetimeInput.value;
+    const sloganVal = sloganInput.value.trim() || '期待已久的时刻';
+    if(!dateVal){
+      alert('请选择目标日期时间');
+      return;
+    }
+    targetDate = new Date(dateVal);
+    eventName.textContent = name + ' 倒数';
+    targetDateLabel.textContent = targetDate.toLocaleString();
+    yearBox.textContent = targetDate.getFullYear();
+    sloganText.textContent = sloganVal;
+    countdown.style.display='flex';
+    msg.textContent = '倒计时进行中';
+    controlPanel.remove(); // 移除设置区，使其无法再修改
+    updateCountdown();
+  });
+
+  function pad(n){return String(n).padStart(2,'0')}
+  function updateCountdown(){
+    if(!targetDate) return;
+    const now = new Date();
+    const diff = targetDate - now;
+    if(diff <= 0){
+      daysEl.textContent='0';hoursEl.textContent='00';minsEl.textContent='00';secsEl.textContent='00';
+      msg.textContent='🎉 事件到达！';
+      return;
+    }
+    const s=Math.floor(diff/1000);
+    const days=Math.floor(s/86400);
+    const hours=Math.floor((s%86400)/3600);
+    const minutes=Math.floor((s%3600)/60);
+    const seconds=s%60;
+    daysEl.textContent=days;
+    hoursEl.textContent=pad(hours);
+    minsEl.textContent=pad(minutes);
+    secsEl.textContent=pad(seconds);
+  }
+  setInterval(updateCountdown,1000);
+</script>
+</body>
+</html>
